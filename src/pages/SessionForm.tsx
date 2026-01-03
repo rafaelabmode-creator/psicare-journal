@@ -65,15 +65,15 @@ export default function SessionForm() {
     time: existingSession?.time || '',
     modality: existingSession?.modality || 'presencial' as 'presencial' | 'online',
     topics: existingSession?.topics || [] as string[],
-    sleepPattern: existingSession?.sleepPattern || '',
+    sleepPattern: existingSession?.sleep_pattern || '',
     mood: existingSession?.mood || [] as string[],
     eating: existingSession?.eating || '',
-    medicationStatus: existingSession?.medication?.status || '',
-    newMedication: existingSession?.medication?.newMedication || '',
+    medicationStatus: existingSession?.medication_status || '',
+    newMedication: existingSession?.medication_new || '',
     approach: existingSession?.approach || '',
     techniques: existingSession?.techniques || [] as string[],
-    dsmDiagnosis: existingSession?.dsmDiagnosis || [] as string[],
-    cidDiagnosis: existingSession?.cidDiagnosis || [] as string[],
+    dsmDiagnosis: existingSession?.dsm_diagnosis || [] as string[],
+    cidDiagnosis: existingSession?.cid_diagnosis || [] as string[],
     notes: existingSession?.notes || '',
   });
 
@@ -85,7 +85,7 @@ export default function SessionForm() {
       : [...array, item];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const newErrors: Record<string, string> = {};
@@ -110,40 +110,43 @@ export default function SessionForm() {
     }
 
     const sessionData = {
-      patientId: patientId!,
+      patient_id: patientId!,
+      session_type: 'regular' as const,
       date: formData.date,
       time: formData.time,
+      duration_minutes: 50,
       modality: formData.modality,
       topics: formData.topics,
-      sleepPattern: formData.sleepPattern,
+      sleep_pattern: formData.sleepPattern,
       mood: formData.mood,
       eating: formData.eating,
-      medication: {
-        status: formData.medicationStatus,
-        newMedication: formData.medicationStatus === 'mudanca' ? formData.newMedication : undefined,
-      },
+      medication_status: formData.medicationStatus,
+      medication_new: formData.medicationStatus === 'mudanca' ? formData.newMedication : undefined,
       approach: formData.approach,
       techniques: formData.techniques,
-      dsmDiagnosis: formData.dsmDiagnosis,
-      cidDiagnosis: formData.cidDiagnosis,
+      dsm_diagnosis: formData.dsmDiagnosis,
+      cid_diagnosis: formData.cidDiagnosis,
       notes: formData.notes,
+      referral_needed: false,
     };
 
     if (isEditing) {
-      updateSession(sessionId!, sessionData);
-      toast({
-        title: 'Sessão atualizada',
-        description: 'Os dados da sessão foram atualizados com sucesso.',
-      });
+      const { error } = await updateSession(sessionId!, sessionData);
+      if (error) {
+        toast({ title: 'Erro', description: 'Não foi possível atualizar a sessão.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Sessão atualizada', description: 'Os dados da sessão foram atualizados com sucesso.' });
+        navigate(`/patients/${patientId}`);
+      }
     } else {
-      addSession(sessionData);
-      toast({
-        title: 'Sessão registrada',
-        description: 'A sessão foi registrada com sucesso.',
-      });
+      const { error } = await addSession(patientId!, sessionData);
+      if (error) {
+        toast({ title: 'Erro', description: 'Não foi possível registrar a sessão.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Sessão registrada', description: 'A sessão foi registrada com sucesso.' });
+        navigate(`/patients/${patientId}`);
+      }
     }
-    
-    navigate(`/patients/${patientId}`);
   };
 
   if (!patient) {

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { usePatients } from '@/hooks/usePatients';
 import { SessionCard } from '@/components/SessionCard';
+import { TreatmentStatus } from '@/types';
 import { 
   ArrowLeft, 
   Plus, 
@@ -14,7 +14,12 @@ import {
   User, 
   Calendar, 
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Phone,
+  Mail,
+  MapPin,
+  Briefcase,
+  Activity
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -29,14 +34,40 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 
+const statusLabels: Record<TreatmentStatus, string> = {
+  ativo: 'Ativo',
+  alta: 'Alta',
+  abandono: 'Abandono',
+  encaminhado: 'Encaminhado',
+  suspenso: 'Suspenso',
+};
+
+const statusColors: Record<TreatmentStatus, string> = {
+  ativo: 'bg-green-500/10 text-green-700 border-green-200',
+  alta: 'bg-blue-500/10 text-blue-700 border-blue-200',
+  abandono: 'bg-red-500/10 text-red-700 border-red-200',
+  encaminhado: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
+  suspenso: 'bg-gray-500/10 text-gray-700 border-gray-200',
+};
+
 export default function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getPatient, getPatientSessions, deletePatient } = usePatients();
+  const { getPatient, getPatientSessions, deletePatient, loading } = usePatients();
   
   const patient = getPatient(id!);
   const sessions = getPatientSessions(id!);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!patient) {
     return (
@@ -72,14 +103,22 @@ export default function PatientDetail() {
     return new Date(date).toLocaleDateString('pt-BR');
   };
 
-  const handleDelete = () => {
-    deletePatient(patient.id);
-    toast({
-      title: 'Paciente removido',
-      description: 'O paciente e todas as sessões foram removidos.',
-      variant: 'destructive',
-    });
-    navigate('/patients');
+  const handleDelete = async () => {
+    const { error } = await deletePatient(patient.id);
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível remover o paciente.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Paciente removido',
+        description: 'O paciente e todas as sessões foram removidos.',
+        variant: 'destructive',
+      });
+      navigate('/patients');
+    }
   };
 
   return (
@@ -98,15 +137,24 @@ export default function PatientDetail() {
                 <User className="h-7 w-7" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{patient.name}</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold text-foreground">{patient.name}</h1>
+                  <Badge 
+                    variant="outline" 
+                    className={`${statusColors[patient.current_status]} border`}
+                  >
+                    <Activity className="h-3 w-3 mr-1" />
+                    {statusLabels[patient.current_status]}
+                  </Badge>
+                </div>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-muted-foreground">
                   <span className="font-mono text-sm">{formatCPF(patient.cpf)}</span>
                   <span>•</span>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span className="text-sm">{formatDate(patient.birthDate)}</span>
+                    <span className="text-sm">{formatDate(patient.birth_date)}</span>
                   </div>
-                  <Badge variant="secondary">{calculateAge(patient.birthDate)} anos</Badge>
+                  <Badge variant="secondary">{calculateAge(patient.birth_date)} anos</Badge>
                 </div>
               </div>
             </div>
@@ -143,6 +191,54 @@ export default function PatientDetail() {
           </div>
         </div>
 
+        {/* Patient Info */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {patient.phone && (
+            <Card className="border-border bg-card shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <Phone className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Telefone</p>
+                  <p className="font-medium text-foreground">{patient.phone}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {patient.email && (
+            <Card className="border-border bg-card shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <Mail className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">E-mail</p>
+                  <p className="font-medium text-foreground truncate">{patient.email}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {patient.city && (
+            <Card className="border-border bg-card shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <MapPin className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Cidade</p>
+                  <p className="font-medium text-foreground">{patient.city}{patient.state ? `, ${patient.state}` : ''}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {patient.profession && (
+            <Card className="border-border bg-card shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <Briefcase className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Profissão</p>
+                  <p className="font-medium text-foreground">{patient.profession}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="border-border bg-card shadow-card">
@@ -177,12 +273,45 @@ export default function PatientDetail() {
                 <Calendar className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-lg font-bold text-foreground">{formatDate(patient.createdAt)}</p>
+                <p className="text-lg font-bold text-foreground">{formatDate(patient.created_at)}</p>
                 <p className="text-sm text-muted-foreground">Cadastrado em</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Guardian Info (if minor) */}
+        {patient.is_minor && patient.guardian_name && (
+          <Card className="border-border bg-card shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">Responsável Legal</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Nome</p>
+                <p className="font-medium text-foreground">{patient.guardian_name}</p>
+              </div>
+              {patient.guardian_relationship && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Parentesco</p>
+                  <p className="font-medium text-foreground">{patient.guardian_relationship}</p>
+                </div>
+              )}
+              {patient.guardian_cpf && (
+                <div>
+                  <p className="text-sm text-muted-foreground">CPF</p>
+                  <p className="font-mono text-foreground">{formatCPF(patient.guardian_cpf)}</p>
+                </div>
+              )}
+              {patient.guardian_phone && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Telefone</p>
+                  <p className="font-medium text-foreground">{patient.guardian_phone}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sessions */}
         <Card className="border-border bg-card shadow-card">

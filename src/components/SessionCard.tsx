@@ -1,13 +1,25 @@
-import { Session } from '@/types';
-import { Calendar, Clock, Monitor, MapPin, ChevronRight, Brain, Pill, Moon, Utensils, Heart } from 'lucide-react';
+import { Session, SessionType } from '@/types';
+import { Calendar, Clock, Monitor, MapPin, ChevronRight, Brain, Moon, Heart, FileText, ClipboardList } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { therapyApproaches, sleepPatterns, moods, eatingPatterns } from '@/data/psychologyData';
+import { therapyApproaches, sleepPatterns, moods } from '@/data/psychologyData';
 
 interface SessionCardProps {
   session: Session;
   onClick?: () => void;
 }
+
+const sessionTypeLabels: Record<SessionType, string> = {
+  anamnese: 'Primeira Consulta',
+  regular: 'Sessão Regular',
+  encerramento: 'Encerramento',
+};
+
+const sessionTypeColors: Record<SessionType, string> = {
+  anamnese: 'bg-purple-500/10 text-purple-700 border-purple-200',
+  regular: 'bg-primary/10 text-primary border-primary/20',
+  encerramento: 'bg-orange-500/10 text-orange-700 border-orange-200',
+};
 
 export function SessionCard({ session, onClick }: SessionCardProps) {
   const formatDate = (date: string) => {
@@ -19,20 +31,18 @@ export function SessionCard({ session, onClick }: SessionCardProps) {
     });
   };
 
-  const getApproachLabel = (value: string) => {
+  const getApproachLabel = (value: string | null) => {
+    if (!value) return 'Não especificada';
     return therapyApproaches.find(a => a.value === value)?.label || value;
   };
 
-  const getSleepLabel = (value: string) => {
+  const getSleepLabel = (value: string | null) => {
+    if (!value) return 'Não informado';
     return sleepPatterns.find(s => s.value === value)?.label || value;
   };
 
   const getMoodLabels = (values: string[]) => {
     return values.map(v => moods.find(m => m.value === v)?.label || v);
-  };
-
-  const getEatingLabel = (value: string) => {
-    return eatingPatterns.find(e => e.value === value)?.label || value;
   };
 
   return (
@@ -51,8 +61,19 @@ export function SessionCard({ session, onClick }: SessionCardProps) {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>{session.time}</span>
+                <span>{session.time} ({session.duration_minutes}min)</span>
               </div>
+              <Badge 
+                variant="outline"
+                className={`${sessionTypeColors[session.session_type]} border`}
+              >
+                {session.session_type === 'anamnese' ? (
+                  <ClipboardList className="h-3 w-3 mr-1" />
+                ) : (
+                  <FileText className="h-3 w-3 mr-1" />
+                )}
+                {sessionTypeLabels[session.session_type]}
+              </Badge>
               <Badge 
                 variant={session.modality === 'presencial' ? 'default' : 'secondary'}
                 className="flex items-center gap-1"
@@ -88,12 +109,14 @@ export function SessionCard({ session, onClick }: SessionCardProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Moon className="h-4 w-4" />
-                <span>{getSleepLabel(session.sleepPattern)}</span>
+                <span>{getSleepLabel(session.sleep_pattern)}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Heart className="h-4 w-4" />
-                <span>{getMoodLabels(session.mood).slice(0, 2).join(', ')}</span>
-              </div>
+              {session.mood.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Heart className="h-4 w-4" />
+                  <span>{getMoodLabels(session.mood).slice(0, 2).join(', ')}</span>
+                </div>
+              )}
             </div>
           </div>
 

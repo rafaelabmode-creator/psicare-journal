@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,13 +9,24 @@ import { Plus, Search, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function Patients() {
-  const { patients, getPatientSessions } = usePatients();
+  const navigate = useNavigate();
+  const { patients, loading } = usePatients();
   const [search, setSearch] = useState('');
 
   const filteredPatients = patients.filter(patient =>
     patient.name.toLowerCase().includes(search.toLowerCase()) ||
     patient.cpf.includes(search)
   );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -54,7 +65,7 @@ export default function Patients() {
               <PatientCard
                 key={patient.id}
                 patient={patient}
-                sessionCount={getPatientSessions(patient.id).length}
+                onClick={() => navigate(`/patients/${patient.id}`)}
               />
             ))}
           </div>

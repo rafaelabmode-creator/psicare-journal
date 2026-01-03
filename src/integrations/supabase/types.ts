@@ -14,7 +14,294 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      patient_status_history: {
+        Row: {
+          changed_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          patient_id: string
+          reason: string
+          status: Database["public"]["Enums"]["treatment_status"]
+        }
+        Insert: {
+          changed_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          reason: string
+          status: Database["public"]["Enums"]["treatment_status"]
+        }
+        Update: {
+          changed_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          reason?: string
+          status?: Database["public"]["Enums"]["treatment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_status_history_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          address: string | null
+          birth_date: string
+          city: string | null
+          cpf: string
+          created_at: string
+          current_status: Database["public"]["Enums"]["treatment_status"]
+          email: string | null
+          guardian_cpf: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_relationship: string | null
+          id: string
+          is_minor: boolean
+          name: string
+          phone: string | null
+          profession: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date: string
+          city?: string | null
+          cpf: string
+          created_at?: string
+          current_status?: Database["public"]["Enums"]["treatment_status"]
+          email?: string | null
+          guardian_cpf?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          is_minor?: boolean
+          name: string
+          phone?: string | null
+          profession?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string
+          city?: string | null
+          cpf?: string
+          created_at?: string
+          current_status?: Database["public"]["Enums"]["treatment_status"]
+          email?: string | null
+          guardian_cpf?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          is_minor?: boolean
+          name?: string
+          phone?: string | null
+          profession?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          crp: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crp: string
+          email?: string | null
+          full_name: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crp?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      session_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_type: string
+          file_path: string | null
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_type: string
+          file_path?: string | null
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string | null
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_documents_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          approach: Database["public"]["Enums"]["therapy_approach"] | null
+          cid_diagnosis: string[]
+          clinical_hypotheses: string | null
+          clinical_observations: string | null
+          complaint_history: string | null
+          created_at: string
+          date: string
+          dsm_diagnosis: string[]
+          duration_minutes: number
+          eating: string | null
+          id: string
+          interventions: string | null
+          main_complaint: string | null
+          medication_new: string | null
+          medication_status: string | null
+          modality: Database["public"]["Enums"]["session_modality"]
+          mood: string[]
+          notes: string | null
+          observed_progress: string | null
+          patient_id: string
+          referral_needed: boolean
+          referral_reason: string | null
+          referral_to: string | null
+          relevant_history: string | null
+          session_type: Database["public"]["Enums"]["session_type"]
+          sleep_pattern: string | null
+          techniques: string[]
+          therapeutic_goals: string | null
+          time: string
+          topics: string[]
+          treatment_plan: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approach?: Database["public"]["Enums"]["therapy_approach"] | null
+          cid_diagnosis?: string[]
+          clinical_hypotheses?: string | null
+          clinical_observations?: string | null
+          complaint_history?: string | null
+          created_at?: string
+          date: string
+          dsm_diagnosis?: string[]
+          duration_minutes?: number
+          eating?: string | null
+          id?: string
+          interventions?: string | null
+          main_complaint?: string | null
+          medication_new?: string | null
+          medication_status?: string | null
+          modality: Database["public"]["Enums"]["session_modality"]
+          mood?: string[]
+          notes?: string | null
+          observed_progress?: string | null
+          patient_id: string
+          referral_needed?: boolean
+          referral_reason?: string | null
+          referral_to?: string | null
+          relevant_history?: string | null
+          session_type?: Database["public"]["Enums"]["session_type"]
+          sleep_pattern?: string | null
+          techniques?: string[]
+          therapeutic_goals?: string | null
+          time: string
+          topics?: string[]
+          treatment_plan?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approach?: Database["public"]["Enums"]["therapy_approach"] | null
+          cid_diagnosis?: string[]
+          clinical_hypotheses?: string | null
+          clinical_observations?: string | null
+          complaint_history?: string | null
+          created_at?: string
+          date?: string
+          dsm_diagnosis?: string[]
+          duration_minutes?: number
+          eating?: string | null
+          id?: string
+          interventions?: string | null
+          main_complaint?: string | null
+          medication_new?: string | null
+          medication_status?: string | null
+          modality?: Database["public"]["Enums"]["session_modality"]
+          mood?: string[]
+          notes?: string | null
+          observed_progress?: string | null
+          patient_id?: string
+          referral_needed?: boolean
+          referral_reason?: string | null
+          referral_to?: string | null
+          relevant_history?: string | null
+          session_type?: Database["public"]["Enums"]["session_type"]
+          sleep_pattern?: string | null
+          techniques?: string[]
+          therapeutic_goals?: string | null
+          time?: string
+          topics?: string[]
+          treatment_plan?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +310,19 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      session_modality: "presencial" | "online"
+      session_type: "anamnese" | "regular" | "encerramento"
+      therapy_approach:
+        | "cognitiva"
+        | "psicodinamica"
+        | "humanista"
+        | "analise-comportamento"
+      treatment_status:
+        | "ativo"
+        | "alta"
+        | "abandono"
+        | "encaminhado"
+        | "suspenso"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +449,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      session_modality: ["presencial", "online"],
+      session_type: ["anamnese", "regular", "encerramento"],
+      therapy_approach: [
+        "cognitiva",
+        "psicodinamica",
+        "humanista",
+        "analise-comportamento",
+      ],
+      treatment_status: [
+        "ativo",
+        "alta",
+        "abandono",
+        "encaminhado",
+        "suspenso",
+      ],
+    },
   },
 } as const
