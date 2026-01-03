@@ -3,13 +3,15 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePatients } from '@/hooks/usePatients';
 import { useToast } from '@/hooks/use-toast';
+import { generateSessionNarrative } from '@/utils/sessionNarrative';
+import { PatientReportDialog } from '@/components/PatientReportDialog';
 import {
   ArrowLeft,
   Edit,
   Trash2,
-  Calendar,
   Clock,
   MapPin,
   Monitor,
@@ -21,6 +23,8 @@ import {
   Stethoscope,
   FileText,
   AlertTriangle,
+  ScrollText,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -129,7 +133,8 @@ export default function SessionDetail() {
             </div>
           </div>
 
-          <div className="flex gap-2 sm:ml-auto">
+          <div className="flex flex-wrap gap-2 sm:ml-auto">
+            <PatientReportDialog session={session} patient={patient} />
             <Button variant="outline" asChild>
               <Link to={`/patients/${patientId}/sessions/${sessionId}/edit`}>
                 <Edit className="h-4 w-4" />
@@ -166,171 +171,204 @@ export default function SessionDetail() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Questões Tratadas */}
-          <Card className="border-border bg-card shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5 text-primary" />
-                Questões Tratadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {session.topics.map((topic) => (
-                  <Badge key={topic} variant="secondary">
-                    {topic}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tabs for structured view and narrative */}
+        <Tabs defaultValue="structured" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="structured" className="gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Visualização Estruturada
+            </TabsTrigger>
+            <TabsTrigger value="narrative" className="gap-2">
+              <ScrollText className="h-4 w-4" />
+              Texto Corrido (CFP)
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Estado Geral */}
-          <Card className="border-border bg-card shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Heart className="h-5 w-5 text-primary" />
-                Estado Geral
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Moon className="h-4 w-4" />
-                  Sono
-                </div>
-                <p className="font-medium text-foreground">
-                  {getLabel(session.sleepPattern, sleepPatterns)}
-                </p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Heart className="h-4 w-4" />
-                  Humor
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {session.mood.map((m) => (
-                    <Badge key={m} variant="outline">
-                      {getLabel(m, moods)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Utensils className="h-4 w-4" />
-                  Alimentação
-                </div>
-                <p className="font-medium text-foreground">
-                  {getLabel(session.eating, eatingPatterns)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Medicação */}
-          <Card className="border-border bg-card shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Pill className="h-5 w-5 text-primary" />
-                Medicação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-medium text-foreground">
-                {getLabel(session.medication.status, medicationStatus)}
-              </p>
-              {session.medication.newMedication && (
-                <div className="mt-3 rounded-lg bg-secondary p-3">
-                  <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
-                  <p className="mt-1 text-foreground">{session.medication.newMedication}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Abordagem e Técnicas */}
-          <Card className="border-border bg-card shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Brain className="h-5 w-5 text-primary" />
-                Abordagem e Técnicas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Abordagem</p>
-                <p className="font-semibold text-foreground">
-                  {getLabel(session.approach, therapyApproaches)}
-                </p>
-              </div>
-              {session.techniques.length > 0 && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Técnicas Utilizadas</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {session.techniques.map((tech) => (
-                      <Badge key={tech} variant="outline">
-                        {tech}
+          {/* Structured View */}
+          <TabsContent value="structured">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Questões Tratadas */}
+              <Card className="border-border bg-card shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Questões Tratadas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {session.topics.map((topic) => (
+                      <Badge key={topic} variant="secondary">
+                        {topic}
                       </Badge>
                     ))}
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          {/* Diagnósticos */}
-          {(session.dsmDiagnosis?.length > 0 || session.cidDiagnosis?.length > 0) && (
-            <Card className="border-border bg-card shadow-card lg:col-span-2">
+              {/* Estado Geral */}
+              <Card className="border-border bg-card shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Heart className="h-5 w-5 text-primary" />
+                    Estado Geral
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Moon className="h-4 w-4" />
+                      Sono
+                    </div>
+                    <p className="font-medium text-foreground">
+                      {getLabel(session.sleepPattern, sleepPatterns)}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Heart className="h-4 w-4" />
+                      Humor
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {session.mood.map((m) => (
+                        <Badge key={m} variant="outline">
+                          {getLabel(m, moods)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Utensils className="h-4 w-4" />
+                      Alimentação
+                    </div>
+                    <p className="font-medium text-foreground">
+                      {getLabel(session.eating, eatingPatterns)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Medicação */}
+              <Card className="border-border bg-card shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Pill className="h-5 w-5 text-primary" />
+                    Medicação
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-medium text-foreground">
+                    {getLabel(session.medication.status, medicationStatus)}
+                  </p>
+                  {session.medication.newMedication && (
+                    <div className="mt-3 rounded-lg bg-secondary p-3">
+                      <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
+                      <p className="mt-1 text-foreground">{session.medication.newMedication}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Abordagem e Técnicas */}
+              <Card className="border-border bg-card shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Brain className="h-5 w-5 text-primary" />
+                    Abordagem e Técnicas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Abordagem</p>
+                    <p className="font-semibold text-foreground">
+                      {getLabel(session.approach, therapyApproaches)}
+                    </p>
+                  </div>
+                  {session.techniques.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Técnicas Utilizadas</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {session.techniques.map((tech) => (
+                          <Badge key={tech} variant="outline">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Diagnósticos */}
+              {(session.dsmDiagnosis?.length > 0 || session.cidDiagnosis?.length > 0) && (
+                <Card className="border-border bg-card shadow-card lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Stethoscope className="h-5 w-5 text-primary" />
+                      Classificação Diagnóstica
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {session.dsmDiagnosis?.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">DSM-5-TR</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {session.dsmDiagnosis.map((code) => (
+                            <Badge key={code} variant="secondary">
+                              {getDiagnosisLabel(code, dsmDiagnoses)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {session.cidDiagnosis?.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">CID-10</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {session.cidDiagnosis.map((code) => (
+                            <Badge key={code} variant="secondary">
+                              {getDiagnosisLabel(code, cidDiagnoses)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Observações */}
+              {session.notes && (
+                <Card className="border-border bg-card shadow-card lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Observações</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap text-foreground">{session.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Narrative View */}
+          <TabsContent value="narrative">
+            <Card className="border-border bg-card shadow-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Stethoscope className="h-5 w-5 text-primary" />
-                  Classificação Diagnóstica
+                  <ScrollText className="h-5 w-5 text-primary" />
+                  Prontuário - Texto Corrido
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {session.dsmDiagnosis?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">DSM-5-TR</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {session.dsmDiagnosis.map((code) => (
-                        <Badge key={code} variant="secondary">
-                          {getDiagnosisLabel(code, dsmDiagnoses)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {session.cidDiagnosis?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">CID-10</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {session.cidDiagnosis.map((code) => (
-                        <Badge key={code} variant="secondary">
-                          {getDiagnosisLabel(code, cidDiagnoses)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Observações */}
-          {session.notes && (
-            <Card className="border-border bg-card shadow-card lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Observações</CardTitle>
-              </CardHeader>
               <CardContent>
-                <p className="whitespace-pre-wrap text-foreground">{session.notes}</p>
+                <div className="whitespace-pre-wrap text-foreground leading-relaxed font-serif bg-secondary/30 p-6 rounded-lg border border-border">
+                  {generateSessionNarrative(session, patient)}
+                </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
