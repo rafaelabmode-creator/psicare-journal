@@ -1,16 +1,31 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatients } from '@/hooks/usePatients';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { PatientCard } from '@/components/PatientCard';
 import { Users, FileText, Plus, Brain, Shield, Clock } from 'lucide-react';
 
 const Index = () => {
-  const { patients, sessions, getPatientSessions } = usePatients();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { patients, sessions, getPatientSessions, loading } = usePatients();
   
-  const recentPatients = patients.slice(-3).reverse();
+  const recentPatients = patients.slice(0, 3);
   const totalSessions = sessions.length;
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -19,11 +34,16 @@ const Index = () => {
         <section className="relative overflow-hidden rounded-2xl gradient-hero p-8 text-primary-foreground shadow-lg">
           <div className="relative z-10">
             <h1 className="text-3xl font-bold md:text-4xl">
-              Bem-vindo ao PsiProntuário
+              {profile?.full_name ? `Olá, ${profile.full_name.split(' ')[0]}!` : 'Bem-vindo ao PsiProntuário'}
             </h1>
             <p className="mt-2 max-w-2xl text-primary-foreground/90">
               Sistema de gestão de prontuários psicológicos em conformidade com as normas do Conselho Federal de Psicologia.
             </p>
+            {profile?.crp && (
+              <p className="mt-1 text-sm text-primary-foreground/70">
+                CRP: {profile.crp}
+              </p>
+            )}
             <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="secondary" size="lg" asChild>
                 <Link to="/patients/new">
@@ -87,7 +107,7 @@ const Index = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {sessions.length > 0 ? new Date(sessions[sessions.length - 1]?.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}
+                  {sessions.length > 0 ? new Date(sessions[0]?.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}
                 </p>
                 <p className="text-sm text-muted-foreground">Última Sessão</p>
               </div>
@@ -148,7 +168,7 @@ const Index = () => {
                 <PatientCard 
                   key={patient.id} 
                   patient={patient} 
-                  sessionCount={getPatientSessions(patient.id).length}
+                  onClick={() => navigate(`/patients/${patient.id}`)}
                 />
               ))}
             </div>

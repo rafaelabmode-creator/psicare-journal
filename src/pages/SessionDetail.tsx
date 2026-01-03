@@ -221,7 +221,7 @@ export default function SessionDetail() {
                       Sono
                     </div>
                     <p className="font-medium text-foreground">
-                      {getLabel(session.sleepPattern, sleepPatterns)}
+                      {getLabel(session.sleep_pattern || '', sleepPatterns)}
                     </p>
                   </div>
                   <div>
@@ -257,17 +257,17 @@ export default function SessionDetail() {
                     Medicação
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="font-medium text-foreground">
-                    {getLabel(session.medication.status, medicationStatus)}
-                  </p>
-                  {session.medication.newMedication && (
-                    <div className="mt-3 rounded-lg bg-secondary p-3">
-                      <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
-                      <p className="mt-1 text-foreground">{session.medication.newMedication}</p>
-                    </div>
-                  )}
-                </CardContent>
+            <CardContent>
+              <p className="font-medium text-foreground">
+                {getLabel(session.medication_status || '', medicationStatus)}
+              </p>
+              {session.medication_new && (
+                <div className="mt-3 rounded-lg bg-secondary p-3">
+                  <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
+                  <p className="mt-1 text-foreground">{session.medication_new}</p>
+                </div>
+              )}
+            </CardContent>
               </Card>
 
               {/* Abordagem e Técnicas */}
@@ -301,7 +301,7 @@ export default function SessionDetail() {
               </Card>
 
               {/* Diagnósticos */}
-              {(session.dsmDiagnosis?.length > 0 || session.cidDiagnosis?.length > 0) && (
+              {(session.dsm_diagnosis?.length > 0 || session.cid_diagnosis?.length > 0) && (
                 <Card className="border-border bg-card shadow-card lg:col-span-2">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -310,11 +310,11 @@ export default function SessionDetail() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {session.dsmDiagnosis?.length > 0 && (
+                    {session.dsm_diagnosis?.length > 0 && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">DSM-5-TR</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {session.dsmDiagnosis.map((code) => (
+                          {session.dsm_diagnosis.map((code) => (
                             <Badge key={code} variant="secondary">
                               {getDiagnosisLabel(code, dsmDiagnoses)}
                             </Badge>
@@ -322,11 +322,11 @@ export default function SessionDetail() {
                         </div>
                       </div>
                     )}
-                    {session.cidDiagnosis?.length > 0 && (
+                    {session.cid_diagnosis?.length > 0 && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">CID-10</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {session.cidDiagnosis.map((code) => (
+                          {session.cid_diagnosis.map((code) => (
                             <Badge key={code} variant="secondary">
                               {getDiagnosisLabel(code, cidDiagnoses)}
                             </Badge>

@@ -50,18 +50,40 @@ const formatTechniquesList = (techniques: string[]) => {
 export function generateSessionNarrative(session: Session, patient: Patient): string {
   const date = formatDateLong(session.date);
   const modality = session.modality === 'presencial' ? 'presencial' : 'online';
-  const approach = getLabel(session.approach, therapyApproaches);
-  const sleep = getLabel(session.sleepPattern, sleepPatterns).toLowerCase();
-  const eating = getLabel(session.eating, eatingPatterns).toLowerCase();
-  const moodText = formatMoodList(session.mood);
-  const topicsText = formatTopicsList(session.topics);
-  const medicationText = getLabel(session.medication.status, medicationStatus).toLowerCase();
+  const approach = session.approach ? getLabel(session.approach, therapyApproaches) : 'não especificada';
+  const sleep = session.sleep_pattern ? getLabel(session.sleep_pattern, sleepPatterns).toLowerCase() : 'não informado';
+  const eating = session.eating ? getLabel(session.eating, eatingPatterns).toLowerCase() : 'não informada';
+  const moodText = session.mood.length > 0 ? formatMoodList(session.mood) : 'não informado';
+  const topicsText = session.topics.length > 0 ? formatTopicsList(session.topics) : 'não especificadas';
+  const medicationText = session.medication_status ? getLabel(session.medication_status, medicationStatus).toLowerCase() : 'não informado';
 
   let narrative = `REGISTRO DE SESSÃO\n\n`;
   narrative += `Paciente: ${patient.name}\n`;
   narrative += `Data: ${date}\n`;
   narrative += `Horário: ${session.time}\n`;
-  narrative += `Modalidade: ${modality.charAt(0).toUpperCase() + modality.slice(1)}\n\n`;
+  narrative += `Duração: ${session.duration_minutes} minutos\n`;
+  narrative += `Modalidade: ${modality.charAt(0).toUpperCase() + modality.slice(1)}\n`;
+  narrative += `Tipo: ${session.session_type === 'anamnese' ? 'Primeira Consulta (Anamnese)' : session.session_type === 'encerramento' ? 'Encerramento' : 'Sessão Regular'}\n\n`;
+  
+  // Se for anamnese, incluir campos específicos
+  if (session.session_type === 'anamnese') {
+    narrative += `AVALIAÇÃO INICIAL\n\n`;
+    if (session.main_complaint) {
+      narrative += `Queixa Principal: ${session.main_complaint}\n\n`;
+    }
+    if (session.complaint_history) {
+      narrative += `Histórico da Queixa: ${session.complaint_history}\n\n`;
+    }
+    if (session.relevant_history) {
+      narrative += `Histórico Relevante: ${session.relevant_history}\n\n`;
+    }
+    if (session.therapeutic_goals) {
+      narrative += `Objetivos Terapêuticos: ${session.therapeutic_goals}\n\n`;
+    }
+    if (session.treatment_plan) {
+      narrative += `Plano de Tratamento: ${session.treatment_plan}\n\n`;
+    }
+  }
   
   narrative += `EVOLUÇÃO DO ATENDIMENTO\n\n`;
   
@@ -71,10 +93,10 @@ export function generateSessionNarrative(session: Session, patient: Patient): st
   narrative += `com padrão de sono ${sleep} `;
   narrative += `e alimentação ${eating}. `;
   
-  if (session.medication.status !== 'sem-medicacao') {
+  if (session.medication_status && session.medication_status !== 'sem-medicacao') {
     narrative += `Em relação à medicação, o(a) paciente relata que está ${medicationText}`;
-    if (session.medication.newMedication) {
-      narrative += `, sendo a nova terapêutica: ${session.medication.newMedication}`;
+    if (session.medication_new) {
+      narrative += `, sendo a nova terapêutica: ${session.medication_new}`;
     }
     narrative += `. `;
   }
@@ -85,18 +107,44 @@ export function generateSessionNarrative(session: Session, patient: Patient): st
     narrative += `, utilizando-se as seguintes técnicas: ${formatTechniquesList(session.techniques)}`;
   }
   narrative += `. `;
+
+  // Campos de evolução
+  if (session.clinical_observations) {
+    narrative += `\n\nObservações Clínicas: ${session.clinical_observations}`;
+  }
   
-  if ((session.dsmDiagnosis && session.dsmDiagnosis.length > 0) || 
-      (session.cidDiagnosis && session.cidDiagnosis.length > 0)) {
+  if (session.clinical_hypotheses) {
+    narrative += `\n\nHipóteses Clínicas: ${session.clinical_hypotheses}`;
+  }
+  
+  if (session.observed_progress) {
+    narrative += `\n\nProgresso Observado: ${session.observed_progress}`;
+  }
+  
+  if (session.interventions) {
+    narrative += `\n\nIntervenções Realizadas: ${session.interventions}`;
+  }
+
+  // Encaminhamentos
+  if (session.referral_needed && session.referral_to) {
+    narrative += `\n\nENCAMINHAMENTO\n\n`;
+    narrative += `Encaminhado para: ${session.referral_to}`;
+    if (session.referral_reason) {
+      narrative += `\nJustificativa: ${session.referral_reason}`;
+    }
+  }
+  
+  if ((session.dsm_diagnosis && session.dsm_diagnosis.length > 0) || 
+      (session.cid_diagnosis && session.cid_diagnosis.length > 0)) {
     narrative += `\n\nCLASSIFICAÇÃO DIAGNÓSTICA\n\n`;
     
-    if (session.dsmDiagnosis && session.dsmDiagnosis.length > 0) {
-      const dsmLabels = session.dsmDiagnosis.map((code) => getDiagnosisLabel(code, dsmDiagnoses));
+    if (session.dsm_diagnosis && session.dsm_diagnosis.length > 0) {
+      const dsmLabels = session.dsm_diagnosis.map((code) => getDiagnosisLabel(code, dsmDiagnoses));
       narrative += `DSM-5-TR: ${dsmLabels.join('; ')}. `;
     }
     
-    if (session.cidDiagnosis && session.cidDiagnosis.length > 0) {
-      const cidLabels = session.cidDiagnosis.map((code) => getDiagnosisLabel(code, cidDiagnoses));
+    if (session.cid_diagnosis && session.cid_diagnosis.length > 0) {
+      const cidLabels = session.cid_diagnosis.map((code) => getDiagnosisLabel(code, cidDiagnoses));
       narrative += `CID-10: ${cidLabels.join('; ')}. `;
     }
   }
@@ -114,13 +162,14 @@ export function generateSessionNarrative(session: Session, patient: Patient): st
 export function generatePatientReport(session: Session, patient: Patient): string {
   const date = formatDateLong(session.date);
   const modality = session.modality === 'presencial' ? 'presencial' : 'online';
-  const approach = getLabel(session.approach, therapyApproaches);
-  const topicsText = formatTopicsList(session.topics);
+  const approach = session.approach ? getLabel(session.approach, therapyApproaches) : 'psicoterapia';
+  const topicsText = session.topics.length > 0 ? formatTopicsList(session.topics) : 'temas terapêuticos';
   
   let report = `RELATÓRIO DE ATENDIMENTO PSICOLÓGICO\n\n`;
   report += `Paciente: ${patient.name}\n`;
   report += `Data do Atendimento: ${date}\n`;
   report += `Horário: ${session.time}\n`;
+  report += `Duração: ${session.duration_minutes} minutos\n`;
   report += `Modalidade: ${modality.charAt(0).toUpperCase() + modality.slice(1)}\n\n`;
   
   report += `---\n\n`;
