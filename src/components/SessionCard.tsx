@@ -1,5 +1,5 @@
 import { Session, SessionType } from '@/types';
-import { Calendar, Clock, Monitor, MapPin, ChevronRight, Brain, Moon, Heart, FileText, ClipboardList } from 'lucide-react';
+import { Calendar, Clock, Monitor, MapPin, ChevronRight, Brain, Moon, Heart, FileText, ClipboardList, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { therapyApproaches, sleepPatterns, moods } from '@/data/psychologyData';
@@ -45,6 +45,8 @@ export function SessionCard({ session, onClick }: SessionCardProps) {
     return values.map(v => moods.find(m => m.value === v)?.label || v);
   };
 
+  const hasEvolutionNotes = session.clinical_observations || session.clinical_hypotheses || session.observed_progress || session.interventions;
+
   return (
     <Card 
       className="group cursor-pointer border-border bg-card shadow-card transition-all duration-300 hover:shadow-card-hover hover:border-primary/30"
@@ -85,36 +87,61 @@ export function SessionCard({ session, onClick }: SessionCardProps) {
                 )}
                 {session.modality === 'presencial' ? 'Presencial' : 'Online'}
               </Badge>
-            </div>
-
-            {/* Topics */}
-            <div className="flex flex-wrap gap-1.5">
-              {session.topics.slice(0, 4).map((topic) => (
-                <Badge key={topic} variant="outline" className="text-xs">
-                  {topic}
-                </Badge>
-              ))}
-              {session.topics.length > 4 && (
-                <Badge variant="outline" className="text-xs">
-                  +{session.topics.length - 4}
+              {session.referral_needed && (
+                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                  <ArrowRightLeft className="h-3 w-3 mr-1" />
+                  Encaminhamento
                 </Badge>
               )}
             </div>
 
+            {/* Topics */}
+            {session.topics.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {session.topics.slice(0, 4).map((topic) => (
+                  <Badge key={topic} variant="outline" className="text-xs">
+                    {topic}
+                  </Badge>
+                ))}
+                {session.topics.length > 4 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{session.topics.length - 4}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Anamnese preview for first consultation */}
+            {session.session_type === 'anamnese' && session.main_complaint && (
+              <div className="text-sm text-muted-foreground line-clamp-2">
+                <span className="font-medium text-foreground">Queixa principal:</span> {session.main_complaint}
+              </div>
+            )}
+
             {/* Quick Info */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-primary" />
-                <span>{getApproachLabel(session.approach)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Moon className="h-4 w-4" />
-                <span>{getSleepLabel(session.sleep_pattern)}</span>
-              </div>
+              {session.approach && (
+                <div className="flex items-center gap-1.5">
+                  <Brain className="h-4 w-4 text-primary" />
+                  <span>{getApproachLabel(session.approach)}</span>
+                </div>
+              )}
+              {session.sleep_pattern && (
+                <div className="flex items-center gap-1.5">
+                  <Moon className="h-4 w-4" />
+                  <span>{getSleepLabel(session.sleep_pattern)}</span>
+                </div>
+              )}
               {session.mood.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   <Heart className="h-4 w-4" />
                   <span>{getMoodLabels(session.mood).slice(0, 2).join(', ')}</span>
+                </div>
+              )}
+              {hasEvolutionNotes && (
+                <div className="flex items-center gap-1.5 text-primary">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Evolução registrada</span>
                 </div>
               )}
             </div>
