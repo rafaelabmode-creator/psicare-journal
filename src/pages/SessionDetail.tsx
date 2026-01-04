@@ -25,6 +25,11 @@ import {
   AlertTriangle,
   ScrollText,
   LayoutGrid,
+  TrendingUp,
+  ArrowRightLeft,
+  Target,
+  NotebookPen,
+  ClipboardList,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -46,6 +51,12 @@ import {
   dsmDiagnoses,
   cidDiagnoses,
 } from '@/data/psychologyData';
+
+const sessionTypeLabels: Record<string, { label: string; color: string }> = {
+  anamnese: { label: 'Anamnese', color: 'bg-primary text-primary-foreground' },
+  regular: { label: 'Regular', color: 'bg-secondary text-secondary-foreground' },
+  encerramento: { label: 'Encerramento', color: 'bg-destructive text-destructive-foreground' },
+};
 
 export default function SessionDetail() {
   const { patientId, sessionId } = useParams();
@@ -98,6 +109,9 @@ export default function SessionDetail() {
     navigate(`/patients/${patientId}`);
   };
 
+  const isAnamnese = session.session_type === 'anamnese';
+  const sessionTypeInfo = sessionTypeLabels[session.session_type] || sessionTypeLabels.regular;
+
   return (
     <Layout>
       <div className="mx-auto max-w-4xl space-y-6 animate-fade-in">
@@ -116,10 +130,14 @@ export default function SessionDetail() {
               <h1 className="text-2xl font-bold text-foreground capitalize">
                 {formatDate(session.date)}
               </h1>
-              <div className="mt-2 flex items-center gap-4 text-muted-foreground">
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-muted-foreground">
+                <Badge className={sessionTypeInfo.color}>
+                  <ClipboardList className="mr-1 h-3 w-3" />
+                  {sessionTypeInfo.label}
+                </Badge>
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4" />
-                  <span>{session.time}</span>
+                  <span>{session.time} ({session.duration_minutes} min)</span>
                 </div>
                 <Badge variant={session.modality === 'presencial' ? 'default' : 'secondary'}>
                   {session.modality === 'presencial' ? (
@@ -187,118 +205,245 @@ export default function SessionDetail() {
           {/* Structured View */}
           <TabsContent value="structured">
             <div className="grid gap-6 lg:grid-cols-2">
-              {/* Questões Tratadas */}
-              <Card className="border-border bg-card shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Questões Tratadas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {session.topics.map((topic) => (
-                      <Badge key={topic} variant="secondary">
-                        {topic}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Campos de Anamnese */}
+              {isAnamnese && (
+                <>
+                  {session.main_complaint && (
+                    <Card className="border-border bg-card shadow-card lg:col-span-2 border-l-4 border-l-primary">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <NotebookPen className="h-5 w-5 text-primary" />
+                          Anamnese - Avaliação Inicial
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Queixa Principal</p>
+                          <p className="mt-1 text-foreground whitespace-pre-wrap">{session.main_complaint}</p>
+                        </div>
+                        {session.complaint_history && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">História da Queixa</p>
+                            <p className="mt-1 text-foreground whitespace-pre-wrap">{session.complaint_history}</p>
+                          </div>
+                        )}
+                        {session.relevant_history && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Histórico Relevante</p>
+                            <p className="mt-1 text-foreground whitespace-pre-wrap">{session.relevant_history}</p>
+                          </div>
+                        )}
+                        {session.therapeutic_goals && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                              <Target className="h-4 w-4" />
+                              Objetivos Terapêuticos
+                            </p>
+                            <p className="mt-1 text-foreground whitespace-pre-wrap">{session.therapeutic_goals}</p>
+                          </div>
+                        )}
+                        {session.treatment_plan && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Plano de Tratamento</p>
+                            <p className="mt-1 text-foreground whitespace-pre-wrap">{session.treatment_plan}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
 
-              {/* Estado Geral */}
-              <Card className="border-border bg-card shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Heart className="h-5 w-5 text-primary" />
-                    Estado Geral
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Moon className="h-4 w-4" />
-                      Sono
-                    </div>
-                    <p className="font-medium text-foreground">
-                      {getLabel(session.sleep_pattern || '', sleepPatterns)}
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Heart className="h-4 w-4" />
-                      Humor
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {session.mood.map((m) => (
-                        <Badge key={m} variant="outline">
-                          {getLabel(m, moods)}
+              {/* Questões Tratadas */}
+              {session.topics.length > 0 && (
+                <Card className="border-border bg-card shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Questões Tratadas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {session.topics.map((topic) => (
+                        <Badge key={topic} variant="secondary">
+                          {topic}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Utensils className="h-4 w-4" />
-                      Alimentação
-                    </div>
-                    <p className="font-medium text-foreground">
-                      {getLabel(session.eating, eatingPatterns)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Estado Geral */}
+              {(session.sleep_pattern || session.mood.length > 0 || session.eating) && (
+                <Card className="border-border bg-card shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Heart className="h-5 w-5 text-primary" />
+                      Estado Geral
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {session.sleep_pattern && (
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Moon className="h-4 w-4" />
+                          Sono
+                        </div>
+                        <p className="font-medium text-foreground">
+                          {getLabel(session.sleep_pattern, sleepPatterns)}
+                        </p>
+                      </div>
+                    )}
+                    {session.mood.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Heart className="h-4 w-4" />
+                          Humor
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {session.mood.map((m) => (
+                            <Badge key={m} variant="outline">
+                              {getLabel(m, moods)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {session.eating && (
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Utensils className="h-4 w-4" />
+                          Alimentação
+                        </div>
+                        <p className="font-medium text-foreground">
+                          {getLabel(session.eating, eatingPatterns)}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Medicação */}
-              <Card className="border-border bg-card shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Pill className="h-5 w-5 text-primary" />
-                    Medicação
-                  </CardTitle>
-                </CardHeader>
-            <CardContent>
-              <p className="font-medium text-foreground">
-                {getLabel(session.medication_status || '', medicationStatus)}
-              </p>
-              {session.medication_new && (
-                <div className="mt-3 rounded-lg bg-secondary p-3">
-                  <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
-                  <p className="mt-1 text-foreground">{session.medication_new}</p>
-                </div>
+              {session.medication_status && (
+                <Card className="border-border bg-card shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Pill className="h-5 w-5 text-primary" />
+                      Medicação
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="font-medium text-foreground">
+                      {getLabel(session.medication_status, medicationStatus)}
+                    </p>
+                    {session.medication_new && (
+                      <div className="mt-3 rounded-lg bg-secondary p-3">
+                        <p className="text-sm text-muted-foreground">Nova terapêutica:</p>
+                        <p className="mt-1 text-foreground">{session.medication_new}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-              </Card>
 
               {/* Abordagem e Técnicas */}
-              <Card className="border-border bg-card shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Brain className="h-5 w-5 text-primary" />
-                    Abordagem e Técnicas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Abordagem</p>
-                    <p className="font-semibold text-foreground">
-                      {getLabel(session.approach, therapyApproaches)}
-                    </p>
-                  </div>
-                  {session.techniques.length > 0 && (
+              {session.approach && (
+                <Card className="border-border bg-card shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Brain className="h-5 w-5 text-primary" />
+                      Abordagem e Técnicas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Técnicas Utilizadas</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {session.techniques.map((tech) => (
-                          <Badge key={tech} variant="outline">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
+                      <p className="text-sm text-muted-foreground">Abordagem</p>
+                      <p className="font-semibold text-foreground">
+                        {getLabel(session.approach, therapyApproaches)}
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    {session.techniques.length > 0 && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Técnicas Utilizadas</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {session.techniques.map((tech) => (
+                            <Badge key={tech} variant="outline">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Evolução Clínica */}
+              {(session.clinical_observations || session.clinical_hypotheses || session.observed_progress || session.interventions) && (
+                <Card className="border-border bg-card shadow-card lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      Evolução Clínica
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {session.clinical_observations && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Observações Clínicas</p>
+                        <p className="mt-1 text-foreground whitespace-pre-wrap">{session.clinical_observations}</p>
+                      </div>
+                    )}
+                    {session.clinical_hypotheses && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Hipóteses Clínicas</p>
+                        <p className="mt-1 text-foreground whitespace-pre-wrap">{session.clinical_hypotheses}</p>
+                      </div>
+                    )}
+                    {session.observed_progress && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Progresso Observado</p>
+                        <p className="mt-1 text-foreground whitespace-pre-wrap">{session.observed_progress}</p>
+                      </div>
+                    )}
+                    {session.interventions && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Intervenções Realizadas</p>
+                        <p className="mt-1 text-foreground whitespace-pre-wrap">{session.interventions}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Encaminhamento */}
+              {session.referral_needed && (
+                <Card className="border-border bg-card shadow-card lg:col-span-2 border-l-4 border-l-warning">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <ArrowRightLeft className="h-5 w-5 text-warning" />
+                      Encaminhamento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {session.referral_to && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Encaminhado para</p>
+                        <p className="mt-1 text-foreground font-medium">{session.referral_to}</p>
+                      </div>
+                    )}
+                    {session.referral_reason && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Justificativa</p>
+                        <p className="mt-1 text-foreground whitespace-pre-wrap">{session.referral_reason}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Diagnósticos */}
               {(session.dsm_diagnosis?.length > 0 || session.cid_diagnosis?.length > 0) && (
