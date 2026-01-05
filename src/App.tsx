@@ -10,6 +10,7 @@ import PatientForm from "./pages/PatientForm";
 import PatientDetail from "./pages/PatientDetail";
 import SessionForm from "./pages/SessionForm";
 import SessionDetail from "./pages/SessionDetail";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Route path="/patients/:patientId/sessions/new" element={<ProtectedRoute><SessionForm /></ProtectedRoute>} />
       <Route path="/patients/:patientId/sessions/:sessionId" element={<ProtectedRoute><SessionDetail /></ProtectedRoute>} />
       <Route path="/patients/:patientId/sessions/:sessionId/edit" element={<ProtectedRoute><SessionForm /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
