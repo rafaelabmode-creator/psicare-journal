@@ -8,6 +8,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { useToast } from '@/hooks/use-toast';
 import { generateSessionNarrative } from '@/utils/sessionNarrative';
 import { PatientReportDialog } from '@/components/PatientReportDialog';
+import { SessionDocuments } from '@/components/SessionDocuments';
 import {
   ArrowLeft,
   Edit,
@@ -514,6 +515,9 @@ export default function SessionDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Documents Section */}
+        <SessionDocuments sessionId={session.id} />
       </div>
     </Layout>
   );

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { usePatients } from '@/hooks/usePatients';
 import { SessionCard } from '@/components/SessionCard';
+import { PatientStatusDialog } from '@/components/PatientStatusDialog';
 import { TreatmentStatus } from '@/types';
 import { 
   ArrowLeft, 
@@ -19,7 +21,8 @@ import {
   Mail,
   MapPin,
   Briefcase,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -54,7 +57,8 @@ export default function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getPatient, getPatientSessions, deletePatient, loading } = usePatients();
+  const { getPatient, getPatientSessions, deletePatient, loading, refetch } = usePatients();
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   
   const patient = getPatient(id!);
   const sessions = getPatientSessions(id!);
@@ -141,10 +145,12 @@ export default function PatientDetail() {
                   <h1 className="text-2xl font-bold text-foreground">{patient.name}</h1>
                   <Badge 
                     variant="outline" 
-                    className={`${statusColors[patient.current_status]} border`}
+                    className={`${statusColors[patient.current_status]} border cursor-pointer hover:opacity-80`}
+                    onClick={() => setStatusDialogOpen(true)}
                   >
                     <Activity className="h-3 w-3 mr-1" />
                     {statusLabels[patient.current_status]}
+                    <Settings className="h-3 w-3 ml-1" />
                   </Badge>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-muted-foreground">
@@ -359,6 +365,17 @@ export default function PatientDetail() {
             )}
           </CardContent>
         </Card>
+
+        {/* Status Dialog */}
+        <PatientStatusDialog
+          open={statusDialogOpen}
+          onOpenChange={(open) => {
+            setStatusDialogOpen(open);
+            if (!open) refetch();
+          }}
+          patientId={patient.id}
+          currentStatus={patient.current_status}
+        />
       </div>
     </Layout>
   );

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, FileText, Home, Brain } from 'lucide-react';
+import { Users, Home, Brain, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LayoutProps {
@@ -13,6 +13,7 @@ export function Layout({ children }: LayoutProps) {
   const navItems = [
     { path: '/', icon: Home, label: 'Início' },
     { path: '/patients', icon: Users, label: 'Pacientes' },
+    { path: '/profile', icon: User, label: 'Perfil' },
   ];
 
   return (
