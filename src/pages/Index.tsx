@@ -6,7 +6,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { PatientCard } from '@/components/PatientCard';
-import { Users, FileText, Plus, Brain, Shield, Clock } from 'lucide-react';
+import { Users, FileText, Plus, Brain, Shield } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -46,14 +46,15 @@ const Index = () => {
             )}
             <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="secondary" size="lg" asChild>
-                <Link to="/patients/new">
-                  <Plus className="h-5 w-5" />
-                  Novo Paciente
+                <Link to="/patients">
+                  <Users className="h-5 w-5" />
+                  Ver Pacientes
                 </Link>
               </Button>
               <Button variant="ghost" size="lg" className="text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <Link to="/patients">
-                  Ver Todos os Pacientes
+                <Link to="/patients/new">
+                  <Plus className="h-5 w-5" />
+                  Novo Paciente
                 </Link>
               </Button>
             </div>
@@ -63,7 +64,7 @@ const Index = () => {
         </section>
 
         {/* Stats */}
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-3">
           <Card className="border-border bg-card shadow-card">
             <CardContent className="flex items-center gap-4 p-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -96,20 +97,6 @@ const Index = () => {
               <div>
                 <p className="text-2xl font-bold text-foreground">CFP</p>
                 <p className="text-sm text-muted-foreground">Em Conformidade</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card shadow-card">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {sessions.length > 0 ? new Date(sessions[0]?.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}
-                </p>
-                <p className="text-sm text-muted-foreground">Última Sessão</p>
               </div>
             </CardContent>
           </Card>
