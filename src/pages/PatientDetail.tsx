@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePatients } from '@/hooks/usePatients';
 import { SessionCard } from '@/components/SessionCard';
 import { PatientStatusDialog } from '@/components/PatientStatusDialog';
+import { PatientRecordPDF } from '@/components/PatientRecordPDF';
 import { TreatmentStatus } from '@/types';
 import { 
   ArrowLeft, 
@@ -166,7 +167,8 @@ export default function PatientDetail() {
             </div>
           </div>
           
-          <div className="flex gap-2 sm:ml-auto">
+          <div className="flex flex-wrap gap-2 sm:ml-auto">
+            <PatientRecordPDF patient={patient} sessions={sessions} />
             <Button variant="outline" asChild>
               <Link to={`/patients/${patient.id}/edit`}>
                 <Edit className="h-4 w-4" />
