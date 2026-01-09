@@ -12,6 +12,7 @@ import SessionForm from "./pages/SessionForm";
 import SessionDetail from "./pages/SessionDetail";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      <Route path="/install" element={<Install />} />
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/patients" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
       <Route path="/patients/new" element={<ProtectedRoute><PatientForm /></ProtectedRoute>} />
