@@ -121,7 +121,7 @@ export function SessionDocuments({ sessionId }: SessionDocumentsProps) {
       }
       fetchDocuments();
     } catch (error) {
-      console.error('Upload error:', error);
+      if (import.meta.env.DEV) console.error('Upload error:', error);
       toast({
         title: 'Erro no upload',
         description: 'Não foi possível enviar o arquivo.',
@@ -152,7 +152,7 @@ export function SessionDocuments({ sessionId }: SessionDocumentsProps) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Download error:', error);
+      if (import.meta.env.DEV) console.error('Download error:', error);
       toast({
         title: 'Erro no download',
         description: 'Não foi possível baixar o arquivo.',
@@ -185,7 +185,7 @@ export function SessionDocuments({ sessionId }: SessionDocumentsProps) {
 
       fetchDocuments();
     } catch (error) {
-      console.error('Delete error:', error);
+      if (import.meta.env.DEV) console.error('Delete error:', error);
       toast({
         title: 'Erro ao excluir',
         description: 'Não foi possível remover o arquivo.',
