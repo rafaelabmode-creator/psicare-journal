@@ -340,7 +340,7 @@ export function PatientRecordPDF({ patient, sessions }: PatientRecordPDFProps) {
         description: 'O prontuário completo foi baixado.',
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      if (import.meta.env.DEV) console.error('Error generating PDF:', error);
       toast({
         title: 'Erro ao gerar PDF',
         description: 'Não foi possível gerar o prontuário.',
