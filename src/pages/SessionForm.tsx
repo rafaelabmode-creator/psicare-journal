@@ -33,6 +33,8 @@ import {
   Target,
   History,
   NotebookPen,
+  Plus,
+  X,
 } from 'lucide-react';
 import {
   sessionTopics,
@@ -120,6 +122,39 @@ export default function SessionForm() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customTopicInput, setCustomTopicInput] = useState('');
+  const [customTechniqueInput, setCustomTechniqueInput] = useState('');
+  const [customTopics, setCustomTopics] = useState<string[]>([]);
+  const [customTechniques, setCustomTechniques] = useState<string[]>([]);
+
+  const addCustomTopic = () => {
+    const topic = customTopicInput.trim();
+    if (!topic) return;
+    if (sessionTopics.includes(topic) || customTopics.includes(topic)) return;
+    setCustomTopics([...customTopics, topic]);
+    setFormData({ ...formData, topics: [...formData.topics, topic] });
+    setCustomTopicInput('');
+  };
+
+  const removeCustomTopic = (topic: string) => {
+    setCustomTopics(customTopics.filter(t => t !== topic));
+    setFormData({ ...formData, topics: formData.topics.filter(t => t !== topic) });
+  };
+
+  const addCustomTechnique = () => {
+    const technique = customTechniqueInput.trim();
+    if (!technique) return;
+    const existingTechs = techniquesByApproach[formData.approach] || [];
+    if (existingTechs.includes(technique) || customTechniques.includes(technique)) return;
+    setCustomTechniques([...customTechniques, technique]);
+    setFormData({ ...formData, techniques: [...formData.techniques, technique] });
+    setCustomTechniqueInput('');
+  };
+
+  const removeCustomTechnique = (technique: string) => {
+    setCustomTechniques(customTechniques.filter(t => t !== technique));
+    setFormData({ ...formData, techniques: formData.techniques.filter(t => t !== technique) });
+  };
 
   const toggleArrayItem = (array: string[], item: string) => {
     return array.includes(item)
@@ -460,7 +495,47 @@ export default function SessionForm() {
                       {topic}
                     </Badge>
                   ))}
+                  {customTopics.map((topic) => (
+                    <Badge
+                      key={topic}
+                      variant={formData.topics.includes(topic) ? 'default' : 'outline'}
+                      className="cursor-pointer transition-all hover:scale-105 pr-1 gap-1"
+                    >
+                      <span onClick={() => setFormData({ 
+                        ...formData, 
+                        topics: toggleArrayItem(formData.topics, topic) 
+                      })}>{topic}</span>
+                      <span
+                        onClick={() => removeCustomTopic(topic)}
+                        className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                        title="Remover"
+                      >
+                        <X className="h-3 w-3" />
+                      </span>
+                    </Badge>
+                  ))}
                 </div>
+
+                {/* Adicionar tema personalizado */}
+                <div className="flex gap-2 mt-3">
+                  <input
+                    type="text"
+                    placeholder="Adicionar tema personalizado..."
+                    value={customTopicInput}
+                    onChange={(e) => setCustomTopicInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTopic())}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomTopic}
+                    className="flex items-center gap-1 px-3 py-1 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar
+                  </button>
+                </div>
+
                 {errors.topics && (
                   <p className="mt-2 text-sm text-destructive">{errors.topics}</p>
                 )}
@@ -649,6 +724,45 @@ export default function SessionForm() {
                         {technique}
                       </Badge>
                     ))}
+                    {customTechniques.map((technique) => (
+                      <Badge
+                        key={technique}
+                        variant={formData.techniques.includes(technique) ? 'default' : 'outline'}
+                        className="cursor-pointer transition-all hover:scale-105 pr-1 gap-1"
+                      >
+                        <span onClick={() => setFormData({ 
+                          ...formData, 
+                          techniques: toggleArrayItem(formData.techniques, technique) 
+                        })}>{technique}</span>
+                        <span
+                          onClick={() => removeCustomTechnique(technique)}
+                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                          title="Remover"
+                        >
+                          <X className="h-3 w-3" />
+                        </span>
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* Adicionar técnica personalizada */}
+                  <div className="flex gap-2 mt-3">
+                    <input
+                      type="text"
+                      placeholder="Adicionar técnica personalizada..."
+                      value={customTechniqueInput}
+                      onChange={(e) => setCustomTechniqueInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTechnique())}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomTechnique}
+                      className="flex items-center gap-1 px-3 py-1 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar
+                    </button>
                   </div>
                 </div>
               )}
