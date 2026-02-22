@@ -86,11 +86,33 @@ export function generateSessionNarrative(session: Session, patient: Patient): st
     }
     
     narrative += `AVALIAÇÃO DO ESTADO ATUAL\n\n`;
-    narrative += `Durante a avaliação inicial, observou-se que o(a) paciente apresenta humor ${moodText}. `;
-    narrative += `Quanto aos aspectos de rotina, relata padrão de sono ${sleep} e alimentação ${eating}. `;
-    
+
+    const estadoAnam: string[] = [];
+    if (session.mood && session.mood.length > 0) {
+      estadoAnam.push(`humor ${formatMoodList(session.mood)}`);
+    }
+    if (session.sleep_pattern) {
+      estadoAnam.push(`padrão de sono ${getLabel(session.sleep_pattern, sleepPatterns).toLowerCase()}`);
+    }
+    if (session.eating) {
+      estadoAnam.push(`alimentação ${getLabel(session.eating, eatingPatterns).toLowerCase()}`);
+    }
+
+    if (estadoAnam.length > 0) {
+      narrative += `Durante a avaliação inicial, observou-se que o(a) paciente apresenta `;
+      if (estadoAnam.length === 1) {
+        narrative += `${estadoAnam[0]}. `;
+      } else if (estadoAnam.length === 2) {
+        narrative += `${estadoAnam[0]} e ${estadoAnam[1]}. `;
+      } else {
+        narrative += `${estadoAnam.slice(0, -1).join(', ')} e ${estadoAnam[estadoAnam.length - 1]}. `;
+      }
+    } else {
+      narrative += `Durante a avaliação inicial, foram coletadas as informações necessárias para o início do processo terapêutico. `;
+    }
+
     if (session.medication_status && session.medication_status !== 'sem-medicacao') {
-      narrative += `Em relação à medicação, o(a) paciente informa que está ${medicationText}`;
+      narrative += `Em relação à medicação, o(a) paciente informa que está ${getLabel(session.medication_status, medicationStatus).toLowerCase()}`;
       if (session.medication_new) {
         narrative += `, sendo a medicação atual: ${session.medication_new}`;
       }
@@ -177,26 +199,53 @@ export function generateSessionNarrative(session: Session, patient: Patient): st
   
   narrative += `EVOLUÇÃO DO ATENDIMENTO\n\n`;
   
-  narrative += `Na sessão realizada em ${date}, no formato ${modality}, foram abordadas questões relacionadas a ${topicsText}. `;
-  
-  narrative += `O(A) paciente apresentou humor ${moodText}, `;
-  narrative += `com padrão de sono ${sleep} `;
-  narrative += `e alimentação ${eating}. `;
-  
+  // Abertura da sessão
+  if (session.topics.length > 0) {
+    narrative += `Na sessão realizada em ${date}, no formato ${modality}, foram abordadas questões relacionadas a ${topicsText}. `;
+  } else {
+    narrative += `Na sessão realizada em ${date}, no formato ${modality}, foram conduzidas intervenções terapêuticas. `;
+  }
+
+  // Estado geral — só inclui campos efetivamente preenchidos
+  const estadoPartes: string[] = [];
+  if (session.mood && session.mood.length > 0) {
+    estadoPartes.push(`humor ${formatMoodList(session.mood)}`);
+  }
+  if (session.sleep_pattern) {
+    estadoPartes.push(`padrão de sono ${getLabel(session.sleep_pattern, sleepPatterns).toLowerCase()}`);
+  }
+  if (session.eating) {
+    estadoPartes.push(`alimentação ${getLabel(session.eating, eatingPatterns).toLowerCase()}`);
+  }
+
+  if (estadoPartes.length > 0) {
+    narrative += `O(A) paciente apresentou `;
+    if (estadoPartes.length === 1) {
+      narrative += `${estadoPartes[0]}. `;
+    } else if (estadoPartes.length === 2) {
+      narrative += `${estadoPartes[0]} e ${estadoPartes[1]}. `;
+    } else {
+      narrative += `${estadoPartes.slice(0, -1).join(', ')} e ${estadoPartes[estadoPartes.length - 1]}. `;
+    }
+  }
+
+  // Medicação — só se preenchida e diferente de "sem medicação"
   if (session.medication_status && session.medication_status !== 'sem-medicacao') {
-    narrative += `Em relação à medicação, o(a) paciente relata que está ${medicationText}`;
+    narrative += `Em relação à medicação, o(a) paciente relata que está ${getLabel(session.medication_status, medicationStatus).toLowerCase()}`;
     if (session.medication_new) {
       narrative += `, sendo a nova terapêutica: ${session.medication_new}`;
     }
     narrative += `. `;
   }
-  
-  narrative += `\n\nA intervenção foi conduzida sob a perspectiva da ${approach}`;
-  
-  if (session.techniques.length > 0) {
-    narrative += `, utilizando-se as seguintes técnicas: ${formatTechniquesList(session.techniques)}`;
+
+  // Abordagem e técnicas — só se preenchidas
+  if (session.approach) {
+    narrative += `\n\nA intervenção foi conduzida sob a perspectiva da ${approach}`;
+    if (session.techniques.length > 0) {
+      narrative += `, utilizando-se as seguintes técnicas: ${formatTechniquesList(session.techniques)}`;
+    }
+    narrative += `. `;
   }
-  narrative += `. `;
 
   // Campos de evolução
   if (session.clinical_observations) {
