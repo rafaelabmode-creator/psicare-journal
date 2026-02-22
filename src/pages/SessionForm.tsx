@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+
+const documentTypes = [
+  { value: 'laudo', label: 'Laudo Psicológico' },
+  { value: 'atestado', label: 'Atestado' },
+  { value: 'declaracao', label: 'Declaração' },
+  { value: 'termo', label: 'Termo de Consentimento' },
+  { value: 'relatorio', label: 'Relatório' },
+  { value: 'teste', label: 'Teste Psicológico' },
+  { value: 'desenho', label: 'Desenho / Material do Paciente' },
+  { value: 'outro', label: 'Outro' },
+];
 
 const sessionTypes = [
   { value: 'anamnese', label: 'Anamnese (Primeira Consulta)', description: 'Avaliação inicial completa do paciente' },
@@ -80,6 +93,7 @@ export default function SessionForm() {
   const { patientId, sessionId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { getPatient, addSession, sessions, updateSession } = usePatients();
   
   const patient = getPatient(patientId!);
@@ -126,6 +140,9 @@ export default function SessionForm() {
   const [customTechniqueInput, setCustomTechniqueInput] = useState('');
   const [customTopics, setCustomTopics] = useState<string[]>([]);
   const [customTechniques, setCustomTechniques] = useState<string[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; type: string; description: string }[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const addCustomTopic = () => {
     const topic = customTopicInput.trim();
@@ -233,10 +250,34 @@ export default function SessionForm() {
         navigate(`/patients/${patientId}`);
       }
     } else {
-      const { error } = await addSession(patientId!, sessionData);
-      if (error) {
+      const { error, data: newSession } = await addSession(patientId!, sessionData);
+      if (error || !newSession) {
         toast({ title: 'Erro', description: 'Não foi possível registrar a sessão.', variant: 'destructive' });
       } else {
+        // Upload arquivos pendentes
+        if (pendingFiles.length > 0 && user) {
+          setUploadingFiles(true);
+          for (const pending of pendingFiles) {
+            try {
+              const fileExt = pending.file.name.split('.').pop();
+              const fileName = `${user.id}/${newSession.id}/${Date.now()}.${fileExt}`;
+              const { error: uploadError } = await supabase.storage
+                .from('session-documents')
+                .upload(fileName, pending.file);
+              if (!uploadError) {
+                await supabase.from('session_documents').insert({
+                  session_id: newSession.id,
+                  document_type: pending.type,
+                  description: pending.description || pending.file.name,
+                  file_path: fileName,
+                });
+              }
+            } catch (e) {
+              // continua mesmo se um arquivo falhar
+            }
+          }
+          setUploadingFiles(false);
+        }
         toast({ title: 'Sessão registrada', description: 'A sessão foi registrada com sucesso.' });
         navigate(`/patients/${patientId}`);
       }
@@ -947,14 +988,114 @@ export default function SessionForm() {
             </CardContent>
           </Card>
 
+          {/* Anexos */}
+          <Card className="border-border bg-card shadow-card">
+            <CardHeader>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <FileText className="h-5 w-5" />
+              </div>
+              <CardTitle>Anexos</CardTitle>
+              <CardDescription>Testes, desenhos, documentos e outros arquivos desta sessão</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Arquivos selecionados */}
+              {pendingFiles.length > 0 && (
+                <div className="space-y-2">
+                  {pendingFiles.map((pending, index) => (
+                    <div key={index} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{pending.description || pending.file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {documentTypes.find(t => t.value === pending.type)?.label} • {(pending.file.size / 1024).toFixed(0)}KB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPendingFiles(pendingFiles.filter((_, i) => i !== index))}
+                        className="rounded-full p-1 hover:bg-destructive/10 text-destructive"
+                        title="Remover"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Formulário para adicionar arquivo */}
+              <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Tipo</Label>
+                    <select
+                      id="newFileType"
+                      defaultValue="outro"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                    >
+                      {documentTypes.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Descrição</Label>
+                    <input
+                      id="newFileDescription"
+                      type="text"
+                      placeholder="Ex: Teste Beck, Desenho da família..."
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast({ title: 'Arquivo muito grande', description: 'Máximo 10MB.', variant: 'destructive' });
+                      return;
+                    }
+                    const typeEl = document.getElementById('newFileType') as HTMLSelectElement;
+                    const descEl = document.getElementById('newFileDescription') as HTMLInputElement;
+                    setPendingFiles([...pendingFiles, {
+                      file,
+                      type: typeEl?.value || 'outro',
+                      description: descEl?.value || file.name,
+                    }]);
+                    if (descEl) descEl.value = '';
+                    e.target.value = '';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background text-sm hover:bg-accent transition-colors w-full justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  Selecionar Arquivo
+                </button>
+                <p className="text-xs text-muted-foreground text-center">PDF, DOC, DOCX, JPG, PNG • Máximo 10MB • Os arquivos serão enviados ao salvar</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Actions */}
           <div className="flex gap-3">
             <Button type="button" variant="outline" asChild className="flex-1">
               <Link to={`/patients/${patientId}`}>Cancelar</Link>
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1" disabled={uploadingFiles}>
               <Save className="h-4 w-4" />
-              {isEditing ? 'Salvar Alterações' : 'Registrar Sessão'}
+              {uploadingFiles ? 'Enviando arquivos...' : isEditing ? 'Salvar Alterações' : 'Registrar Sessão'}
             </Button>
           </div>
         </form>
