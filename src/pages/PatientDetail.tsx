@@ -63,17 +63,63 @@ export default function PatientDetail() {
   
   const patient = getPatient(id!);
   const sessions = getPatientSessions(id!);
-
+  // Ordena sessões por data (mais recente primeiro)
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
+    const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
+    return dateB.getTime() - dateA.getTime();
+  });
   if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+  return (
+    <Layout>
+      <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-7 w-48 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-32 bg-muted animate-pulse rounded" />
+          </div>
         </div>
-      </Layout>
-    );
-  }
 
+        {/* Stats cards skeleton */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <div className="h-5 w-32 bg-muted animate-pulse rounded mb-3" />
+              <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Sessions list skeleton */}
+        <div className="space-y-4">
+          <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-5 w-48 bg-muted animate-pulse rounded" />
+                <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+  
   if (!patient) {
     return (
       <Layout>
@@ -185,7 +231,7 @@ export default function PatientDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remover paciente?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. Isso removerá permanentemente o paciente e todas as {sessions.length} sessões registradas.
+                    Esta ação não pode ser desfeita. Isso removerá permanentemente o paciente e todas as {sortedSessions.length} sessões registradas.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -255,7 +301,7 @@ export default function PatientDetail() {
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{sessions.length}</p>
+                <p className="text-2xl font-bold text-foreground">{sortedlength}</p>
                 <p className="text-sm text-muted-foreground">Sessões</p>
               </div>
             </CardContent>
@@ -268,7 +314,7 @@ export default function PatientDetail() {
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
-                  {sessions.length > 0 ? formatDate(sessions[0].date) : '—'}
+                  {sortedSessions.length > 0 ? formatDate(sessions[0].date) : '—'}
                 </p>
                 <p className="text-sm text-muted-foreground">Última Sessão</p>
               </div>
@@ -336,9 +382,9 @@ export default function PatientDetail() {
             </Button>
           </CardHeader>
           <CardContent>
-            {sessions.length > 0 ? (
+            {sortedSessions.length > 0 ? (
               <div className="space-y-3">
-                {sessions.map((session) => (
+                {sortedSessions.map((session) => (
                   <SessionCard
                     key={session.id}
                     session={session}

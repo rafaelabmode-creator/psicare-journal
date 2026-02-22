@@ -68,6 +68,46 @@ export default function SessionDetail() {
   const patient = getPatient(patientId!);
   const session = sessions.find((s) => s.id === sessionId);
 
+  // Loading state
+if ((!patient || !session) && (patientId || sessionId)) {
+  return (
+    <Layout>
+      <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-6 w-64 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-24 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+
+        {/* Tabs skeleton */}
+        <div className="h-10 w-full bg-muted animate-pulse rounded" />
+
+        {/* Content skeleton */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <div className="h-5 w-32 bg-muted animate-pulse rounded mb-4" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                <div className="h-4 w-4/5 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-3/5 bg-muted animate-pulse rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>
+  );
+}
   if (!patient || !session) {
     return (
       <Layout>
@@ -484,17 +524,93 @@ export default function SessionDetail() {
                 </Card>
               )}
 
-              {/* Observações */}
-              {session.notes && (
-                <Card className="border-border bg-card shadow-card lg:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Observações</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap text-foreground">{session.notes}</p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Anexos (se houver) */}
+{(() => {
+  try {
+    if (session.notes?.startsWith('__ATTACHMENTS__:')) {
+      const [, attachmentsJson] = session.notes.split('|||');
+      const attachments = JSON.parse(attachmentsJson);
+      
+      if (attachments.length > 0) {
+        return (
+          <Card className="border-border bg-card shadow-card lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Anexos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {attachments.map((file: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3"
+                  >
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {file.type === 'application/pdf' && 'PDF'}
+                        {file.type.startsWith('image/') && 'Imagem'}
+                        {file.type.includes('word') && 'Documento Word'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+    }
+  } catch (e) {
+    // Se der erro ao processar anexos, não mostra nada
+  }
+  return null;
+})()}
+
+{/* Observações (texto limpo, sem código técnico) */}
+{(() => {
+  try {
+    let displayNotes = session.notes;
+    
+   // Remove o código técnico dos anexos
+if (displayNotes?.startsWith('__ATTACHMENTS__:')) {
+  const parts = displayNotes.split('|||');
+  displayNotes = parts[2] || ''; // Pega só o texto das observações
+}
+
+// Só mostra se tiver conteúdo
+if (displayNotes && displayNotes.trim()) {
+  return (
+    <Card className="border-border bg-card shadow-card lg:col-span-2">
+      <CardHeader>
+        <CardTitle className="text-lg">Observações</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="whitespace-pre-wrap text-foreground">{displayNotes}</p>
+      </CardContent>
+    </Card>
+  );
+}
+} catch (e) {
+  // Se der erro, mostra as notes originais
+  if (session.notes) {
+    return (
+      <Card className="border-border bg-card shadow-card lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-lg">Observações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap text-foreground">{session.notes}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+}
+return null;
+})()}
             </div>
           </TabsContent>
 
