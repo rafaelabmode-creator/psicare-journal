@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,13 +7,44 @@ import { usePatients } from '@/hooks/usePatients';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { PatientCard } from '@/components/PatientCard';
-import { Users, FileText, Plus, Brain, Shield } from 'lucide-react';
+import { Users, FileText, Plus, Brain, Shield, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
+
+const cfpResolutionText = `RESOLUÇÃO CFP Nº 001/2009
+
+Dispõe sobre a obrigatoriedade do registro documental decorrente da prestação de serviços psicológicos.
+
+O CONSELHO FEDERAL DE PSICOLOGIA, no uso de suas atribuições legais e regimentais, considerando a necessidade de regulamentação do registro documental decorrente da prestação de serviços psicológicos, resolve:
+
+Art. 1º — Os psicólogos, quando no exercício profissional, ficam obrigados a elaborar e manter atualizados os registros documentais decorrentes de suas atividades.
+
+Art. 2º — Para os fins desta resolução, entende-se como registros documentais os prontuários, as declarações, os atestados, os relatórios, os laudos e os pareceres psicológicos.
+
+Art. 3º — O prontuário é o documento no qual o psicólogo registra as informações sobre os serviços prestados ao paciente/cliente, incluindo identificação, demanda, procedimentos adotados, evolução e demais dados relevantes para o processo.
+
+Art. 4º — Os registros documentais deverão ser armazenados em local seguro, garantindo o sigilo e a confidencialidade das informações, em conformidade com o Código de Ética Profissional do Psicólogo.
+
+Art. 5º — O prazo de guarda dos prontuários é de, no mínimo, 5 (cinco) anos após o encerramento do atendimento, quando adulto. Para crianças e adolescentes, o prazo é de 5 anos após atingirem a maioridade.
+
+Art. 6º — O psicólogo é responsável pela guarda e manutenção dos registros documentais, sendo vedada a sua divulgação a terceiros, salvo nas situações previstas em lei ou nas normas do CFP.
+
+Art. 7º — Esta resolução entra em vigor na data de sua publicação.
+
+Brasília, 22 de janeiro de 2009.
+Conselho Federal de Psicologia`;
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useProfile();
   const { patients, sessions, getPatientSessions, loading } = usePatients();
+  const [cfpModalOpen, setCfpModalOpen] = useState(false);
   
   const recentPatients = patients.slice(0, 3);
   const totalSessions = sessions.length;
@@ -65,7 +97,11 @@ const Index = () => {
 
         {/* Stats */}
         <section className="grid gap-4 sm:grid-cols-3">
-          <Card className="border-border bg-card shadow-card">
+          <Card
+            className="border-border bg-card shadow-card cursor-pointer transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5"
+            onClick={() => navigate('/patients')}
+            title="Ver todos os pacientes"
+          >
             <CardContent className="flex items-center gap-4 p-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Users className="h-6 w-6" />
@@ -73,11 +109,16 @@ const Index = () => {
               <div>
                 <p className="text-2xl font-bold text-foreground">{patients.length}</p>
                 <p className="text-sm text-muted-foreground">Pacientes</p>
+                <p className="text-xs text-primary mt-0.5">Clique para ver →</p>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="border-border bg-card shadow-card">
+          <Card
+            className="border-border bg-card shadow-card cursor-pointer transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5"
+            onClick={() => navigate('/patients')}
+            title="Ver sessões por paciente"
+          >
             <CardContent className="flex items-center gap-4 p-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 text-accent-foreground">
                 <FileText className="h-6 w-6" />
@@ -85,11 +126,16 @@ const Index = () => {
               <div>
                 <p className="text-2xl font-bold text-foreground">{totalSessions}</p>
                 <p className="text-sm text-muted-foreground">Sessões Registradas</p>
+                <p className="text-xs text-primary mt-0.5">Clique para ver →</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card shadow-card">
+          <Card
+            className="border-border bg-card shadow-card cursor-pointer transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5"
+            onClick={() => setCfpModalOpen(true)}
+            title="Ver Resolução CFP nº 001/2009"
+          >
             <CardContent className="flex items-center gap-4 p-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success">
                 <Shield className="h-6 w-6" />
@@ -97,10 +143,29 @@ const Index = () => {
               <div>
                 <p className="text-2xl font-bold text-foreground">CFP</p>
                 <p className="text-sm text-muted-foreground">Em Conformidade</p>
+                <p className="text-xs text-primary mt-0.5">Ver resolução →</p>
               </div>
             </CardContent>
           </Card>
         </section>
+
+        {/* Modal Resolução CFP */}
+        <Dialog open={cfpModalOpen} onOpenChange={setCfpModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-success" />
+                Resolução CFP nº 001/2009
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+              {cfpResolutionText}
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button variant="outline" onClick={() => setCfpModalOpen(false)}>Fechar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Features */}
         <section className="grid gap-6 md:grid-cols-3">
