@@ -14,6 +14,7 @@ import SessionDetail from "./pages/SessionDetail";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
+import DocumentationPDF from "./pages/DocumentationPDF";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/patients/:patientId/sessions/:sessionId" element={<ProtectedRoute><SessionDetail /></ProtectedRoute>} />
       <Route path="/patients/:patientId/sessions/:sessionId/edit" element={<ProtectedRoute><SessionForm /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/documentacao" element={<ProtectedRoute><DocumentationPDF /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
