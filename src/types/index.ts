@@ -11,6 +11,8 @@ export interface Profile {
   crp: string;
   email: string | null;
   phone: string | null;
+  clinic_address: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
