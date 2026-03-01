@@ -123,29 +123,35 @@ export type Database = {
       }
       profiles: {
         Row: {
+          clinic_address: string | null
           created_at: string
           crp: string
           email: string | null
           full_name: string
           id: string
+          logo_url: string | null
           phone: string | null
           updated_at: string
         }
         Insert: {
+          clinic_address?: string | null
           created_at?: string
           crp: string
           email?: string | null
           full_name: string
           id: string
+          logo_url?: string | null
           phone?: string | null
           updated_at?: string
         }
         Update: {
+          clinic_address?: string | null
           created_at?: string
           crp?: string
           email?: string | null
           full_name?: string
           id?: string
+          logo_url?: string | null
           phone?: string | null
           updated_at?: string
         }
